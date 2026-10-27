@@ -1,0 +1,45 @@
+services:
+  - type: web
+    name: quiz-bot-aiogram
+    runtime: docker
+    repo: https://github.com/dilb3k/quiz-bot-aiogram.git
+    branch: master
+    region: frankfurt
+    plan: free
+    healthCheckPath: /health
+    dockerCommand: sh -c "alembic upgrade head && python -m quizbot.seed && exec python main.py"
+    envVars:
+      - key: BOT_TOKEN
+        sync: false
+      - key: DB_HOST
+        fromDatabase:
+          name: quiz-bot-db
+          property: host
+      - key: DB_PORT
+        fromDatabase:
+          name: quiz-bot-db
+          property: port
+      - key: DB_NAME
+        fromDatabase:
+          name: quiz-bot-db
+          property: database
+      - key: DB_USER
+        fromDatabase:
+          name: quiz-bot-db
+          property: user
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: quiz-bot-db
+          property: password
+      - key: SUPERADMIN_ID
+        value: "5583276966"
+      - key: TIMEZONE
+        value: Asia/Tashkent
+
+databases:
+  - name: quiz-bot-db
+    databaseName: quiz_bot
+    user: quiz_bot_user
+    plan: free
+    region: frankfurt
+    postgresMajorVersion: "18"
