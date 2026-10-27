@@ -1,6 +1,8 @@
 import asyncio
 import json
 import logging
+import os
+from aiohttp import web
 from aiogram import Bot, Dispatcher
 from aiogram.client.default import DefaultBotProperties
 from aiogram.client.session.aiohttp import AiohttpSession
@@ -29,6 +31,10 @@ class SafeJSONFormatter(logging.Formatter):
         )
 
 
+async def health(_request: web.Request) -> web.Response:
+    return web.json_response({"status": "ok"})
+
+
 async def main() -> None:
     settings = Settings()
     token = settings.require_token()
@@ -41,6 +47,7 @@ async def main() -> None:
     )
     scheduler = None
     task = None
+    health_runner = None
     dp = Dispatcher(storage=PostgresStorage(db), events_isolation=PostgresIsolation(db))
     dp["db"], dp["settings"] = db, settings
     for observer in [dp.message, dp.callback_query, dp.my_chat_member, dp.poll, dp.poll_answer]:
@@ -78,6 +85,14 @@ async def main() -> None:
         scheduler = Scheduler(db, bot, me.username)
         dp["scheduler"] = scheduler
         task = asyncio.create_task(scheduler.run())
+        port = os.environ.get("PORT")
+        if port:
+            app = web.Application()
+            app.router.add_get("/health", health)
+            health_runner = web.AppRunner(app, access_log=None)
+            await health_runner.setup()
+            site = web.TCPSite(health_runner, "0.0.0.0", int(port))
+            await site.start()
         await bot.delete_webhook(drop_pending_updates=False)
         await dp.start_polling(
             bot,
@@ -86,6 +101,8 @@ async def main() -> None:
             close_bot_session=False,
         )
     finally:
+        if health_runner:
+            await health_runner.cleanup()
         if scheduler:
             await scheduler.stop()
         if task:
