@@ -1,0 +1,11 @@
+[project]
+name = "uzbek-quiz-bot"
+version = "1.0.0"
+requires-python = ">=3.12"
+dynamic = ["dependencies"]
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+markers = ["database: isolated PostgreSQL integration tests"]
+[tool.ruff]
+line-length = 100

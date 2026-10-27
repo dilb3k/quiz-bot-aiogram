@@ -1,0 +1,22 @@
+services:
+  test-db:
+    image: postgres:18
+    environment:
+      POSTGRES_DB: quiz_test
+      POSTGRES_USER: quiz_test
+      POSTGRES_PASSWORD: test_only
+    tmpfs:
+      - /var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U quiz_test -d quiz_test"]
+      interval: 2s
+      timeout: 5s
+      retries: 20
+  tests:
+    build: .
+    environment:
+      TEST_DATABASE_URL: postgresql+asyncpg://quiz_test:test_only@test-db:5432/quiz_test
+    command: ["pytest", "-q"]
+    depends_on:
+      test-db:
+        condition: service_healthy

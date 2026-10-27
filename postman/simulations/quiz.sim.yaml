@@ -1,0 +1,5 @@
+simulation: telegram-quiz
+routing: path
+mocks:
+  - routeKey: telegram
+    path: ../mocks/telegram/default.js
