@@ -6,4 +6,4 @@ RUN pip install --no-cache-dir -r requirements.txt
 RUN useradd --create-home bot
 COPY --chown=bot:bot . .
 USER bot
-CMD ["python", "main.py"]
+CMD ["sh", "-c", "alembic upgrade head && python -m quizbot.seed && exec python main.py"]
